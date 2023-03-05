@@ -89,7 +89,7 @@ private:
      QTimer *timer;
 
      enum gesture{
-         LIKE, DISLIKE, ROTATE_R, ROTATE_L
+         LIKE, DISLIKE, ROTATE_R, ROTATE_L, STOP
      };
 
      QJoysticks *instance;

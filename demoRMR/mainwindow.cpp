@@ -89,6 +89,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
         // vykreslenie robota
         painter.setPen(Qt::red);
+        painter.setBrush(Qt::red);
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
     }
 
@@ -195,7 +196,6 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 
     memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
 
-
     updateSkeletonPicture=1;
 
 
@@ -211,11 +211,12 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
         break;
     case ROTATE_R:
         robot.setRotationSpeed(-3.14159/8);
-
         break;
     case ROTATE_L:
         robot.setRotationSpeed(3.14159/8);
-
+        break;
+    case STOP:
+        robot.setTranslationSpeed(0);
         break;
     default:
         break;
@@ -314,19 +315,19 @@ void MainWindow::getNewFrame()
 int MainWindow::detectGestures()
 {
     // like
-    if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_index_ip].y) {
+     if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_index_ip].y) {
 
-     if (skeleJoints.joints[left_index_ip].y < skeleJoints.joints[left_middle_ip].y) {
+         if (skeleJoints.joints[left_index_ip].y < skeleJoints.joints[left_middle_ip].y) {
 
-         if (skeleJoints.joints[left_middle_ip].y < skeleJoints.joints[left_ring_ip].y) {
+             if (skeleJoints.joints[left_middle_ip].y < skeleJoints.joints[left_ring_ip].y) {
 
-             if (skeleJoints.joints[left_ring_ip].y < skeleJoints.joints[left_pink_ip].y ){
+                 if (skeleJoints.joints[left_ring_ip].y < skeleJoints.joints[left_pink_ip].y ){
 
-                 return LIKE;
-         }
-       }
-    }
-    }
+                     return LIKE;
+             }
+           }
+        }
+     }
 
 
     // dislike
@@ -344,21 +345,27 @@ int MainWindow::detectGestures()
     }
     }
 
-    // dislike
+    // rotate right, three fingers
     if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_thumb_ip].y){
 
      if (skeleJoints.joints[left_index_tip].y < skeleJoints.joints[left_index_ip].y){
 
          if (skeleJoints.joints[left_middle_tip].y < skeleJoints.joints[left_middle_ip].y){
 
-                     return ROTATE_R;
+             if (skeleJoints.joints[left_ringy_tip].y > skeleJoints.joints[left_ring_ip].y){
+
+                 if (skeleJoints.joints[left_pink_tip].y > skeleJoints.joints[left_pink_ip].y){
+
+                             return ROTATE_R;
+
+               }
+
+           }
 
        }
     }
 }
-    // dislike
-
-
+    // rotate left, one finger
      if (skeleJoints.joints[left_index_tip].y < skeleJoints.joints[left_index_ip].y){
 
          if (skeleJoints.joints[left_middle_tip].y > skeleJoints.joints[left_middle_ip].y){
@@ -367,6 +374,27 @@ int MainWindow::detectGestures()
 
        }
     }
+
+     // stop, five fingers
+     if (skeleJoints.joints[left_middle_tip].y < skeleJoints.joints[left_middle_ip].y) {
+
+      if (skeleJoints.joints[left_middle_tip].y < skeleJoints.joints[left_pink_tip].y) {
+
+          if (skeleJoints.joints[left_pink_tip].y < skeleJoints.joints[left_pink_ip].y) {
+
+              if (skeleJoints.joints[left_pink_tip].y < skeleJoints.joints[left_thumb_tip].y ){
+
+                  if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_wrist].y ){
+
+                      return STOP;
+              }
+
+          }
+        }
+     }
+     }
+
+     return 0;
 }
 
 
