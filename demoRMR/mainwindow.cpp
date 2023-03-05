@@ -200,7 +200,6 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 
 
     switch (detectGestures()) {
-
     case LIKE:
         robot.setTranslationSpeed(200);
       //  cout <<"like"<< endl;
@@ -209,6 +208,7 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
         robot.setTranslationSpeed(-200);
      //    cout <<"dislike"<< endl;
         break;
+
     case ROTATE_R:
         robot.setRotationSpeed(-3.14159/8);
         break;
@@ -218,8 +218,8 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     case STOP:
         robot.setTranslationSpeed(0);
         break;
-    default:
-        break;
+//    default:
+//        break;
     }
 
     return 0;
