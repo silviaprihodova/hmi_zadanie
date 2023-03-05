@@ -218,8 +218,8 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     case STOP:
         robot.setTranslationSpeed(0);
         break;
-//    default:
-//        break;
+    default:
+        break;
     }
 
     return 0;
