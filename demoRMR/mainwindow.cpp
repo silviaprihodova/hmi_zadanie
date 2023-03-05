@@ -200,6 +200,7 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 
 
     switch (detectGestures()) {
+
     case LIKE:
         robot.setTranslationSpeed(200);
       //  cout <<"like"<< endl;
@@ -207,6 +208,14 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     case DISLIKE:
         robot.setTranslationSpeed(-200);
      //    cout <<"dislike"<< endl;
+        break;
+    case ROTATE_R:
+        robot.setRotationSpeed(-3.14159/8);
+
+        break;
+    case ROTATE_L:
+        robot.setRotationSpeed(3.14159/8);
+
         break;
     default:
         break;
@@ -335,6 +344,29 @@ int MainWindow::detectGestures()
     }
     }
 
+    // dislike
+    if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_thumb_ip].y){
+
+     if (skeleJoints.joints[left_index_tip].y < skeleJoints.joints[left_index_ip].y){
+
+         if (skeleJoints.joints[left_middle_tip].y < skeleJoints.joints[left_middle_ip].y){
+
+                     return ROTATE_R;
+
+       }
+    }
+}
+    // dislike
+
+
+     if (skeleJoints.joints[left_index_tip].y < skeleJoints.joints[left_index_ip].y){
+
+         if (skeleJoints.joints[left_middle_tip].y > skeleJoints.joints[left_middle_ip].y){
+
+                     return ROTATE_L;
+
+       }
+    }
 }
 
 
