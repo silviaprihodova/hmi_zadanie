@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QPainter>
 #include <math.h>
+#include <cmath>
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// AK HO MAS Z GITU A ROBIS NA LABAKOVOM PC, TAK SI HO VLOZ DO FOLDERA KTORY JE JASNE ODLISITELNY OD TVOJICH KOLEGOV
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -55,6 +56,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
     rect.translate(0,15);
     painter.drawRect(rect);
 
+    QRect rect3;
+    rect3.setHeight(rect.height()/2);
+    rect3.setWidth(rect.width()/2);
+    rect3.translate(rect.topLeft().x() + rect3.width()/2, rect.topLeft().y() + rect3.height()/2);
 
     QRect rect2;
     rect2= ui->frame_2->geometry();//ziskate porametre stvorca, do ktoreho chcete kreslit
@@ -69,6 +74,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
       //  std::cout<<actIndex<<std::endl;
         QImage image = QImage((uchar*)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step, QImage::Format_RGB888  );//kopirovanie cvmat do qimage
         painter.drawImage(rect,image.rgbSwapped());
+
+
+    }
+
+    if (collision == 1){
+
+        painter.setBrush(Qt::red);
+        painter.drawRect(rect3);
     }
 
     if(updateLaserPicture==1) ///ak mam nove data z lidaru
@@ -85,6 +98,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int yp=rect2.height()-(rect2.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().y();//prepocet do obrazovky
             if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
+
         }
 
         // vykreslenie robota
@@ -93,17 +107,47 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
     }
 
-    if(updateSkeletonPicture==1 )
+//    if(updateSkeletonPicture==1 )
+//    {
+//        painter.setPen(Qt::red);
+//        for(int i=0;i<75;i++)
+//        {
+//            int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
+//            int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
+//            if(rect.contains(xp,yp))
+//                painter.drawEllipse(QPoint(xp, yp),2,2);
+//        }
+//    }
+    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-        painter.setPen(Qt::red);
-        for(int i=0;i<75;i++)
-        {
-            int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
-            int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
-            if(rect.contains(xp,yp))
-                painter.drawEllipse(QPoint(xp, yp),2,2);
-        }
+
+        // orezanie, ale z nejakeho dovodu nefunfuje
+       if(copyOfLaserData.Data[k].scanAngle > 30 && copyOfLaserData.Data[k].scanAngle < 330) continue;
+      //  if ( ( (360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)<30.0)  || ((360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)>330)) //continue;
+       // {
+            float X = cos(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10; // uhol pre lavotocivy lidar
+            float Y = sin(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10;
+            float Zd = -14.5, Z = 21, Yd = 11.5;
+            float Xobr = 853.0/2 - (681.743*Y)/(X - Zd);
+            float Yobr = 480.0/2 + (681.743*(-Z + Yd))/(X - Zd);
+
+
+            // pomer obrazka kamery ku vykreslovanim bodom
+            float Xpomer = rect.width()/853.0;
+            float Ypomer = rect.height()/480.0;
+            Xobr *= Xpomer;
+            Yobr *= Ypomer;
+
+            Xobr += rect.topLeft().x();
+            Yobr += rect.topLeft().y();
+
+            if (rect.contains(Xobr, Yobr))
+                painter.drawEllipse(QPoint(Xobr, Yobr),5,5);
+
+            printf("%f\n",copyOfLaserData.Data[k].scanAngle);
     }
+
+   // }
 }
 
 
@@ -170,6 +214,7 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
+
     updateLaserPicture=1;
     update();//tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 

@@ -92,6 +92,12 @@ private:
          STOP, LIKE, DISLIKE,  ROTATE_R, ROTATE_L,
      };
 
+     int collision = 0;
+     double D = 0;
+     long double tickToMeter = 0.000085292090497737556558;
+
+
+
      QJoysticks *instance;
 
      double forwardspeed;//mm/s
