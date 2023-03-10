@@ -3,14 +3,7 @@
 #include <QPainter>
 #include <math.h>
 #include <cmath>
-///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
-/// AK HO MAS Z GITU A ROBIS NA LABAKOVOM PC, TAK SI HO VLOZ DO FOLDERA KTORY JE JASNE ODLISITELNY OD TVOJICH KOLEGOV
-/// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
-/// POTOM MIESTO TYCHTO PAR RIADKOV NAPIS SVOJE MENO ALEBO NEJAKY INY LUKRATIVNY IDENTIFIKATOR
-/// KED SA NAJBLIZSIE PUSTIS DO PRACE, SKONTROLUJ CI JE MIESTO TOHTO TEXTU TVOJ IDENTIFIKATOR
-/// AZ POTOM ZACNI ROBIT... AK TO NESPRAVIS, POJDU BODY DOLE... A NIE JEDEN,ALEBO DVA ALE BUDES RAD
-/// AK SA DOSTANES NA SKUSKU
-
+// PRIHODOVA S., SVEC D.
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -28,11 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     actIndex=-1;
     useCamera1=false;
 
-
-
-
     datacounter=0;
-
 
 }
 
@@ -58,8 +47,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     QRect rect3;
     rect3.setHeight(rect.height()/2);
-    rect3.setWidth(rect.width()/2);
-    rect3.translate(rect.topLeft().x() + rect3.width()/2, rect.topLeft().y() + rect3.height()/2);
+    rect3.setWidth(rect.width()*0.75);
+    rect3.translate(rect.topLeft().x() + rect.width()*0.25/2, rect.topLeft().y() + rect3.height()/2);
 
     QRect rect2;
     rect2= ui->frame_2->geometry();//ziskate porametre stvorca, do ktoreho chcete kreslit
@@ -71,17 +60,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     if( actIndex>-1)/// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
     {
-      //  std::cout<<actIndex<<std::endl;
         QImage image = QImage((uchar*)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step, QImage::Format_RGB888  );//kopirovanie cvmat do qimage
         painter.drawImage(rect,image.rgbSwapped());
-
-
-    }
-
-    if (collision == 1){
-
-        painter.setBrush(Qt::red);
-        painter.drawRect(rect3);
     }
 
     if(updateLaserPicture==1) ///ak mam nove data z lidaru
@@ -98,13 +78,26 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int yp=rect2.height()-(rect2.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().y();//prepocet do obrazovky
             if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
-
         }
 
         // vykreslenie robota
         painter.setPen(Qt::red);
         painter.setBrush(Qt::red);
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
+
+        // warning
+        if (copyOfLaserData.Data->scanDistance/10 < 50) // cca 30 polomer robota + 20 cm k prekazke warning
+        {
+            QFont font("Arial", 40);
+            painter.setFont(font);
+             // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
+            QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
+            painter.setBrush(color);
+            painter.drawRect(rect3);
+            painter.setPen(Qt::white);
+            painter.drawText(rect3, Qt::AlignCenter, "WARNING");
+
+        }
     }
 
 //    if(updateSkeletonPicture==1 )
@@ -120,17 +113,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //    }
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-
-        // orezanie, ale z nejakeho dovodu nefunfuje
-       if(copyOfLaserData.Data[k].scanAngle > 30 && copyOfLaserData.Data[k].scanAngle < 330) continue;
-      //  if ( ( (360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)<30.0)  || ((360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)>330)) //continue;
-       // {
+        // orezanie, ale z nejakeho dovodu nefunguje
+      // if(copyOfLaserData.Data[k].scanAngle > 30 && copyOfLaserData.Data[k].scanAngle < 330) continue;
+        if (copyOfLaserData.Data[k].scanAngle < 30.0  || copyOfLaserData.Data[k].scanAngle > 330.0) //continue;
+        {
             float X = cos(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10; // uhol pre lavotocivy lidar
             float Y = sin(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10;
             float Zd = -14.5, Z = 21, Yd = 11.5;
-            float Xobr = 853.0/2 - (681.743*Y)/(X - Zd);
-            float Yobr = 480.0/2 + (681.743*(-Z + Yd))/(X - Zd);
-
+            float Xobr = 853.0/2 - ((681.743*Y)/(X + Zd));
+            float Yobr = 480.0/2 + ((681.743*(-Z + Yd))/(X + Zd));
 
             // pomer obrazka kamery ku vykreslovanim bodom
             float Xpomer = rect.width()/853.0;
@@ -138,16 +129,19 @@ void MainWindow::paintEvent(QPaintEvent *event)
             Xobr *= Xpomer;
             Yobr *= Ypomer;
 
+            // posunutie
             Xobr += rect.topLeft().x();
             Yobr += rect.topLeft().y();
 
             if (rect.contains(Xobr, Yobr))
                 painter.drawEllipse(QPoint(Xobr, Yobr),5,5);
 
+
             printf("%f\n",copyOfLaserData.Data[k].scanAngle);
+        }
+
     }
 
-   // }
 }
 
 
@@ -286,8 +280,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
     robot.setSkeletonParameters("127.0.0.1",23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
     ///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
     robot.robotStart();
-
-
 
     //ziskanie joystickov
     instance = QJoysticks::getInstance();
