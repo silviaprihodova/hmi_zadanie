@@ -64,6 +64,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawImage(rect,image.rgbSwapped());
     }
 
+
+    int firstPoint = 1;
+
     if(updateLaserPicture==1) ///ak mam nove data z lidaru
     {
         updateLaserPicture=0;
@@ -78,6 +81,22 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int yp=rect2.height()-(rect2.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().y();//prepocet do obrazovky
             if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
+
+
+            // warning
+            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1) // cca 30 polomer robota + 20 cm k prekazke warning
+            {
+                QFont font("Arial", 40);
+                painter.setFont(font);
+                 // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
+                QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
+                painter.setBrush(color);
+                painter.drawRect(rect3);
+                painter.setPen(Qt::white);
+                painter.drawText(rect3, Qt::AlignCenter, "WARNING");
+                firstPoint += 1;
+            }
+
         }
 
         // vykreslenie robota
@@ -85,19 +104,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.setBrush(Qt::red);
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
 
-        // warning
-        if (copyOfLaserData.Data->scanDistance/10 < 50) // cca 30 polomer robota + 20 cm k prekazke warning
-        {
-            QFont font("Arial", 40);
-            painter.setFont(font);
-             // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
-            QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
-            painter.setBrush(color);
-            painter.drawRect(rect3);
-            painter.setPen(Qt::white);
-            painter.drawText(rect3, Qt::AlignCenter, "WARNING");
 
-        }
     }
 
 //    if(updateSkeletonPicture==1 )
@@ -113,12 +120,11 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //    }
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-        // orezanie, ale z nejakeho dovodu nefunguje
-      // if(copyOfLaserData.Data[k].scanAngle > 30 && copyOfLaserData.Data[k].scanAngle < 330) continue;
-        if (copyOfLaserData.Data[k].scanAngle < 30.0  || copyOfLaserData.Data[k].scanAngle > 330.0) //continue;
+        // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
+        if (copyOfLaserData.Data[k].scanAngle < 30.0  || copyOfLaserData.Data[k].scanAngle > 330.0) // rozsah 60 stupnov
         {
-            float X = cos(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10; // uhol pre lavotocivy lidar
-            float Y = sin(360.0-copyOfLaserData.Data[k].scanAngle*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10;
+            float X = cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10; // uhol pre lavotocivy lidar
+            float Y = sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10;
             float Zd = -14.5, Z = 21, Yd = 11.5;
             float Xobr = 853.0/2 - ((681.743*Y)/(X + Zd));
             float Yobr = 480.0/2 + ((681.743*(-Z + Yd))/(X + Zd));
@@ -134,10 +140,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
             Yobr += rect.topLeft().y();
 
             if (rect.contains(Xobr, Yobr))
-                painter.drawEllipse(QPoint(Xobr, Yobr),5,5);
+                painter.drawEllipse(QPoint(Xobr, Yobr),4,4);
 
 
-            printf("%f\n",copyOfLaserData.Data[k].scanAngle);
+           // printf("%f\n",copyOfLaserData.Data[k].scanAngle);
         }
 
     }
