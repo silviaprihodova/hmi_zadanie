@@ -5,6 +5,8 @@
 #include <cmath>
 // PRIHODOVA S., SVEC D.
 
+bool stop_switch = true;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -164,6 +166,14 @@ void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 /// vola sa vzdy ked dojdu nove data z robota. nemusite nic riesit, proste sa to stane
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
+    static unsigned short previousEncoderLeft = robotdata.EncoderLeft, previousEncoderRight = robotdata.EncoderRight;
+
+       static float x = 0, y = 0, previousRads = 0,rads= 0;
+
+       double tTM_var = 0.000085292090497737556558;
+       double D_wheels = 0.23;
+       double PI_var = 3.14159265359;
+
 
 
     ///tu mozete robit s datami z robota
@@ -181,26 +191,36 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
 
 ///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
+       if(abs(previousEncoderLeft - robotdata.EncoderLeft) > 10000){
+                   previousEncoderLeft = robotdata.EncoderLeft;
 
-    if(datacounter%5)
-    {
+               }
+               if(abs(previousEncoderRight - robotdata.EncoderRight) > 10000){
 
-        ///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
-                // ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
-                //ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
-                //ui->lineEdit_4->setText(QString::number(robotdata.GyroAngle));
-                /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
-                /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
-                /// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
-        ///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
-        emit uiValuesChanged(robotdata.EncoderLeft,11,12);
-        ///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
-        /// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
-        /// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
+                   previousEncoderRight = robotdata.EncoderRight;
+               }
 
-    }
-    datacounter++;
+               float rightWheel = tTM_var*(robotdata.EncoderRight - previousEncoderRight);
+               float leftWheel = tTM_var*(robotdata.EncoderLeft - previousEncoderLeft);
 
+               previousEncoderLeft = robotdata.EncoderLeft;
+               previousEncoderRight = robotdata.EncoderRight;
+
+               if((rightWheel - leftWheel) != 0){
+                   rads += (rightWheel - leftWheel)/D_wheels;
+                   x += ((D_wheels*(rightWheel + leftWheel)) / (2.0*(rightWheel - leftWheel)))*(sin(rads) - sin(previousRads));
+                   y -= ((D_wheels*(rightWheel + leftWheel)) / (2.0*(rightWheel - leftWheel)))*(cos(rads) - cos(previousRads));
+
+               }else{
+                   rads = (robotdata.GyroAngle/100.0) * (PI_var/180.0);
+                   x += ((rightWheel + leftWheel)/2.0)*cos(rads);
+                   y += ((rightWheel + leftWheel)/2.0)*sin(rads);
+
+               }
+
+               previousRads = rads;
+
+    emit uiValuesChanged(x,y,rads);
     return 0;
 
 }
@@ -243,30 +263,30 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 
     updateSkeletonPicture=1;
 
+    if(stop_switch == true){
+        switch (detectGestures()) {
+        case LIKE:
+            robot.setTranslationSpeed(200);
+          //  cout <<"like"<< endl;
+            break;
+        case DISLIKE:
+            robot.setTranslationSpeed(-200);
+         //    cout <<"dislike"<< endl;
+            break;
 
-    switch (detectGestures()) {
-    case LIKE:
-        robot.setTranslationSpeed(200);
-      //  cout <<"like"<< endl;
-        break;
-    case DISLIKE:
-        robot.setTranslationSpeed(-200);
-     //    cout <<"dislike"<< endl;
-        break;
-
-    case ROTATE_R:
-        robot.setRotationSpeed(-3.14159/8);
-        break;
-    case ROTATE_L:
-        robot.setRotationSpeed(3.14159/8);
-        break;
-    case STOP:
-        robot.setTranslationSpeed(0);
-        break;
-    default:
-        break;
+        case ROTATE_R:
+            robot.setRotationSpeed(-3.14159/8);
+            break;
+        case ROTATE_L:
+            robot.setRotationSpeed(3.14159/8);
+            break;
+        case STOP:
+            robot.setTranslationSpeed(0);
+            break;
+        default:
+            break;
+        }
     }
-
     return 0;
 }
 void MainWindow::on_pushButton_9_clicked() //start button
@@ -327,7 +347,14 @@ robot.setRotationSpeed(-3.14159/2);
 
 void MainWindow::on_pushButton_4_clicked() //stop
 {
+    if(stop_switch == true){
+         stop_switch = false;
+    }else{
+         stop_switch = true;
+    }
+
     robot.setTranslationSpeed(0);
+
 
 }
 
