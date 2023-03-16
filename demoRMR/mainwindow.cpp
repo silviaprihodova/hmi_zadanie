@@ -60,6 +60,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
     rect2.setWidth(rect.width()/3);
     rect2.translate(rect.bottomRight().x() - rect2.width(), rect.bottomRight().y() - rect2.height());
 
+    // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
+    QFont font("Arial", 40);
+    QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
+
     if( actIndex>-1)/// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
     {
         QImage image = QImage((uchar*)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step, QImage::Format_RGB888  );//kopirovanie cvmat do qimage
@@ -71,9 +75,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     if(updateLaserPicture==1) ///ak mam nove data z lidaru
     {
-        updateLaserPicture=0;
+       updateLaserPicture=0;
 
         painter.setPen(pero);
+
         //teraz tu kreslime random udaje... vykreslite to co treba... t.j. data z lidaru
      //   std::cout<<copyOfLaserData.numberOfScans<<std::endl;
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
@@ -84,21 +89,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
             if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
 
-
-            // warning
-            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1) // cca 30 polomer robota + 20 cm k prekazke warning
-            {
-                QFont font("Arial", 40);
-                painter.setFont(font);
-                 // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
-                QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
-                painter.setBrush(color);
-                painter.drawRect(rect3);
-                painter.setPen(Qt::white);
-                painter.drawText(rect3, Qt::AlignCenter, "WARNING");
-                firstPoint += 1;
-            }
-
         }
 
         // vykreslenie robota
@@ -107,7 +97,25 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
 
 
+        painter.setFont(font);
+        painter.setBrush(color);
+
+        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
+        {
+            // warning
+            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1) // cca 30 polomer robota + 20 cm k prekazke warning
+            {
+                painter.drawRect(rect3);
+                painter.drawText(rect3, Qt::AlignCenter, "WARNING");
+                firstPoint += 1;
+            }
+        }
+
+
     }
+
+
+
 
 //    if(updateSkeletonPicture==1 )
 //    {
@@ -120,6 +128,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //                painter.drawEllipse(QPoint(xp, yp),2,2);
 //        }
 //    }
+
+     painter.setBrush(Qt::red);
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
         // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
