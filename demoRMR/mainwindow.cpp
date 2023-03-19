@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="127.0.0.1";//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+    ipaddress="127.0.0.1";//192.168.1.14toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
     datacounter=0;
@@ -103,7 +103,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
         {
             // warning
-            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1) // cca 30 polomer robota + 20 cm k prekazke warning
+            if ((copyOfLaserData.Data[k].scanDistance/10 < 40) && firstPoint == 1) // cca 20 polomer robota + 20 cm k prekazke warning
             {
                 painter.drawRect(rect3);
                 painter.drawText(rect3, Qt::AlignCenter, "WARNING");
@@ -245,6 +245,8 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
+
+
     updateLaserPicture=1;
     update();//tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 
@@ -268,7 +270,6 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
 /// vola sa ked dojdu nove data z trackera
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
-
     memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
 
     updateSkeletonPicture=1;
@@ -276,21 +277,40 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     if(stop_switch == true){
         switch (detectGestures()) {
         case LIKE:
-            robot.setTranslationSpeed(200);
-          //  cout <<"like"<< endl;
+            if (ramp_trans<1)
+                ramp_trans+=0.1;
+            trans = 200 *ramp_trans;
+            printf("%f\n", trans);
+            robot.setTranslationSpeed(trans);
+            ramp_rot=0.0;
             break;
         case DISLIKE:
-            robot.setTranslationSpeed(-200);
-         //    cout <<"dislike"<< endl;
+            if (ramp_trans<1)
+                ramp_trans+=0.1;
+            trans = 200 *ramp_trans;
+            printf("%f\n", trans);
+            robot.setTranslationSpeed(-trans);
+            ramp_rot=0.0;
             break;
-
         case ROTATE_R:
-            robot.setRotationSpeed(-3.14159/8);
+            if (ramp_rot<1)
+                ramp_rot+=0.1;
+            rot = 3.14159/6 *ramp_rot;
+            printf("%f\n", rot);
+            robot.setRotationSpeed(-rot);
+            ramp_trans=0.0;
             break;
         case ROTATE_L:
-            robot.setRotationSpeed(3.14159/8);
+            if (ramp_rot<1)
+                ramp_rot+=0.1;
+            rot = 3.14159/6 *ramp_rot;
+            printf("%f\n", rot);
+            robot.setRotationSpeed(rot);
+            ramp_trans=0.0;
             break;
         case STOP:
+            ramp_rot=0.0;
+            ramp_trans=0.0;
             robot.setTranslationSpeed(0);
             break;
         default:
