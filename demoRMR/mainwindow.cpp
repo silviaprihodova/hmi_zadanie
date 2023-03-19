@@ -167,22 +167,16 @@ void MainWindow::paintEvent(QPaintEvent *event)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 {
-     ui->lineEdit_2->setText(QString::number(robotX));
-     ui->lineEdit_3->setText(QString::number(robotY));
-     ui->lineEdit_4->setText(QString::number(robotFi));
+//     ui->lineEdit_2->setText(QString::number(robotX));
+//     ui->lineEdit_3->setText(QString::number(robotY));
+//     ui->lineEdit_4->setText(QString::number(robotFi));
 }
 
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
 /// vola sa vzdy ked dojdu nove data z robota. nemusite nic riesit, proste sa to stane
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    static unsigned short previousEncoderLeft = robotdata.EncoderLeft, previousEncoderRight = robotdata.EncoderRight;
 
-       static float x = 0, y = 0, previousRads = 0,rads= 0;
-
-       double tTM_var = 0.000085292090497737556558;
-       double D_wheels = 0.23;
-       double PI_var = 3.14159265359;
 
 
 
@@ -201,36 +195,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
 
 ///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
-       if(abs(previousEncoderLeft - robotdata.EncoderLeft) > 10000){
-                   previousEncoderLeft = robotdata.EncoderLeft;
 
-               }
-               if(abs(previousEncoderRight - robotdata.EncoderRight) > 10000){
-
-                   previousEncoderRight = robotdata.EncoderRight;
-               }
-
-               float rightWheel = tTM_var*(robotdata.EncoderRight - previousEncoderRight);
-               float leftWheel = tTM_var*(robotdata.EncoderLeft - previousEncoderLeft);
-
-               previousEncoderLeft = robotdata.EncoderLeft;
-               previousEncoderRight = robotdata.EncoderRight;
-
-               if((rightWheel - leftWheel) != 0){
-                   rads += (rightWheel - leftWheel)/D_wheels;
-                   x += ((D_wheels*(rightWheel + leftWheel)) / (2.0*(rightWheel - leftWheel)))*(sin(rads) - sin(previousRads));
-                   y -= ((D_wheels*(rightWheel + leftWheel)) / (2.0*(rightWheel - leftWheel)))*(cos(rads) - cos(previousRads));
-
-               }else{
-                   rads = (robotdata.GyroAngle/100.0) * (PI_var/180.0);
-                   x += ((rightWheel + leftWheel)/2.0)*cos(rads);
-                   y += ((rightWheel + leftWheel)/2.0)*sin(rads);
-
-               }
-
-               previousRads = rads;
-
-    emit uiValuesChanged(x,y,rads);
     return 0;
 
 }
