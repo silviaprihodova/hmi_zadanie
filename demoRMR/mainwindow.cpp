@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="127.0.0.1";//192.168.1.14toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+    ipaddress="192.168.1.14";//192.168.1.14toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
     datacounter=0;
@@ -103,11 +103,13 @@ void MainWindow::paintEvent(QPaintEvent *event)
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
         {
             // warning
-            if ((copyOfLaserData.Data[k].scanDistance/10 < 40) && firstPoint == 1) // cca 20 polomer robota + 20 cm k prekazke warning
+            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1 && copyOfLaserData.Data[k].scanDistance != 0) // cca 20 polomer robota + 20 cm k prekazke warning
             {
                 painter.drawRect(rect3);
                 painter.drawText(rect3, Qt::AlignCenter, "WARNING");
                 firstPoint += 1;
+
+
             }
         }
 
@@ -135,8 +137,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
         // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
         if (copyOfLaserData.Data[k].scanAngle < 30.0  || copyOfLaserData.Data[k].scanAngle > 330.0) // rozsah 60 stupnov
         {
-            float X = cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10; // uhol pre lavotocivy lidar
-            float Y = sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data->scanDistance/10;
+            float X = cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data[k].scanDistance/10; // uhol pre lavotocivy lidar
+            float Y = sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0)*copyOfLaserData.Data[k].scanDistance/10;
             float Zd = -14.5, Z = 21, Yd = 11.5;
             float Xobr = 853.0/2 - ((681.743*Y)/(X + Zd));
             float Yobr = 480.0/2 + ((681.743*(-Z + Yd))/(X + Zd));
@@ -238,10 +240,12 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
 
     updateSkeletonPicture=1;
+    bool forward = true;
 
     if(stop_switch == true){
         switch (detectGestures()) {
         case LIKE:
+            forward = true;
             if (ramp_trans<1)
                 ramp_trans+=0.1;
             trans = 200 *ramp_trans;
@@ -250,12 +254,14 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
             ramp_rot=0.0;
             break;
         case DISLIKE:
+
             if (ramp_trans<1)
                 ramp_trans+=0.1;
             trans = 200 *ramp_trans;
             printf("%f\n", trans);
             robot.setTranslationSpeed(-trans);
             ramp_rot=0.0;
+            forward = false;
             break;
         case ROTATE_R:
             if (ramp_rot<1)
@@ -274,9 +280,25 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
             ramp_trans=0.0;
             break;
         case STOP:
+
+            if (ramp_trans != 0.01){
+                ramp_trans-=0.01;
+            }
+            else{
+                robot.setTranslationSpeed(0);
+            }
+            if(forward == true){
+                trans = 200 *ramp_trans;
+                printf("%f\n", trans);
+                robot.setTranslationSpeed(trans);
+            }else if(forward == false){
+                trans = 200 *ramp_trans;
+                printf("%f\n", trans);
+                robot.setTranslationSpeed(-trans);
+            }
+
             ramp_rot=0.0;
             ramp_trans=0.0;
-            robot.setTranslationSpeed(0);
             break;
         default:
             break;
@@ -297,7 +319,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
     robot.setLaserParameters(ipaddress,52999,5299,/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/std::bind(&MainWindow::processThisLidar,this,std::placeholders::_1));
     robot.setRobotParameters(ipaddress,53000,5300,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
     //---simulator ma port 8889, realny robot 8000
-    robot.setCameraParameters("http://"+ipaddress+":8889/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
+    robot.setCameraParameters("http://"+ipaddress+":8000/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
     robot.setSkeletonParameters("127.0.0.1",23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
     ///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
     robot.robotStart();
