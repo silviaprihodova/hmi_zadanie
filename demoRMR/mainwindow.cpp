@@ -247,7 +247,13 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
         case LIKE:
             printf("LIKE\n");
             if(forward == false){
-                robot.setTranslationSpeed(0);
+                while (ramp_trans >= 0.0){
+                    ramp_trans -= 0.01;
+
+                    trans = 200 *ramp_trans;
+                    robot.setTranslationSpeed(trans);
+
+                }
             }
 
             forward = true;
@@ -264,7 +270,13 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
         case DISLIKE:
             printf("DISLIKE\n");
             if(forward == true){
-                robot.setTranslationSpeed(0);
+                while (ramp_trans >= 0.0){
+                    ramp_trans -= 0.01;
+
+                    trans = 200 *ramp_trans;
+                    robot.setTranslationSpeed(-trans);
+
+                }
             }
 
             forward = false;
