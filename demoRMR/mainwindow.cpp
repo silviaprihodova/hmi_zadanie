@@ -245,29 +245,45 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     if(stop_switch == true){
         switch (detectGestures()) {
         case LIKE:
+            printf("LIKE\n");
+            if(forward == false){
+                robot.setTranslationSpeed(0);
+            }
+
             forward = true;
-            if (ramp_trans<1)
-                ramp_trans+=0.1;
-            trans = 200 *ramp_trans;
-            printf("%f\n", trans);
-            robot.setTranslationSpeed(trans);
-            ramp_rot=0.0;
-            break;
-        case DISLIKE:
 
             if (ramp_trans<1)
                 ramp_trans+=0.1;
+
             trans = 200 *ramp_trans;
-            printf("%f\n", trans);
+//            printf("%f\n", trans);
+            robot.setTranslationSpeed(trans);
+            ramp_rot=0.0;
+
+            break;
+        case DISLIKE:
+            printf("DISLIKE\n");
+            if(forward == true){
+                robot.setTranslationSpeed(0);
+            }
+
+            forward = false;
+
+            if (ramp_trans<1)
+                ramp_trans+=0.1;
+
+            trans = 200 *ramp_trans;
+//            printf("%f\n", trans);
             robot.setTranslationSpeed(-trans);
             ramp_rot=0.0;
-            forward = false;
+
             break;
         case ROTATE_R:
+            printf("ROTATE_R\n");
             if (ramp_rot<1)
                 ramp_rot+=0.1;
             rot = 3.14159/6 *ramp_rot;
-            printf("%f\n", rot);
+//            printf("%f\n", rot);
             robot.setRotationSpeed(-rot);
             ramp_trans=0.0;
             break;
@@ -275,30 +291,33 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
             if (ramp_rot<1)
                 ramp_rot+=0.1;
             rot = 3.14159/6 *ramp_rot;
-            printf("%f\n", rot);
+            printf("ROTATE_L\n");
             robot.setRotationSpeed(rot);
             ramp_trans=0.0;
             break;
         case STOP:
+            printf("STOP\n");
+            while (ramp_trans >= 0.0){
+                ramp_trans -= 0.05;
+                if(forward == true){
+                    trans = 200 *ramp_trans;
+//                    printf("%f\n", trans);
+                    robot.setTranslationSpeed(trans);
+                }else{
+                    trans = 200 *ramp_trans;
+//                    printf("%f\n", trans);
+                    robot.setTranslationSpeed(-trans);
+                }
+            }
 
-            if (ramp_trans != 0.01){
-                ramp_trans-=0.01;
-            }
-            else{
-                robot.setTranslationSpeed(0);
-            }
-            if(forward == true){
-                trans = 200 *ramp_trans;
-                printf("%f\n", trans);
-                robot.setTranslationSpeed(trans);
-            }else if(forward == false){
-                trans = 200 *ramp_trans;
-                printf("%f\n", trans);
-                robot.setTranslationSpeed(-trans);
-            }
+            robot.setTranslationSpeed(0);
+
+
+
+            ramp_trans= 0.0;
 
             ramp_rot=0.0;
-            ramp_trans=0.0;
+
             break;
         default:
             break;
