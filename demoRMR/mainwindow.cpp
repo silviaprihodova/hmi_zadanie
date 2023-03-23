@@ -240,7 +240,7 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
     memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
 
     updateSkeletonPicture=1;
-    bool forward = true;
+
 
     if(stop_switch == true){
         switch (detectGestures()) {
@@ -296,14 +296,16 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
             ramp_trans=0.0;
             break;
         case STOP:
-            printf("STOP\n");
+
             while (ramp_trans >= 0.0){
-                ramp_trans -= 0.05;
+                ramp_trans -= 0.01;
                 if(forward == true){
+                    printf("STOP1\n");
                     trans = 200 *ramp_trans;
 //                    printf("%f\n", trans);
                     robot.setTranslationSpeed(trans);
                 }else{
+                    printf("STOP2\n");
                     trans = 200 *ramp_trans;
 //                    printf("%f\n", trans);
                     robot.setTranslationSpeed(-trans);
@@ -320,6 +322,7 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 
             break;
         default:
+            printf("def\n");
             break;
         }
     }

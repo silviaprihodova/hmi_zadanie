@@ -98,7 +98,7 @@ private:
      double trans = 0.0;
      double rot = 0.0;
      double ramp_trans = 0.0, ramp_rot = 0.0;
-
+     bool forward = true;
 
 
      QJoysticks *instance;
