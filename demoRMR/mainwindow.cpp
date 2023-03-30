@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="192.168.1.14";//192.168.1.14toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+    ipaddress="127.0.0.1";//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
     datacounter=0;
@@ -60,10 +60,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
     rect2.setWidth(rect.width()/3);
     rect2.translate(rect.bottomRight().x() - rect2.width(), rect.bottomRight().y() - rect2.height());
 
-    // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
-    QFont font("Arial", 40);
-    QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
-
     if( actIndex>-1)/// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
     {
         QImage image = QImage((uchar*)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step, QImage::Format_RGB888  );//kopirovanie cvmat do qimage
@@ -75,10 +71,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     if(updateLaserPicture==1) ///ak mam nove data z lidaru
     {
-       updateLaserPicture=0;
+        updateLaserPicture=0;
 
         painter.setPen(pero);
-
         //teraz tu kreslime random udaje... vykreslite to co treba... t.j. data z lidaru
      //   std::cout<<copyOfLaserData.numberOfScans<<std::endl;
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
@@ -89,35 +84,32 @@ void MainWindow::paintEvent(QPaintEvent *event)
             if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
 
+            // warning
+            if ((copyOfLaserData.Data[k].scanDistance/10 < 30) && firstPoint == 1 && copyOfLaserData.Data[k].scanDistance != 0) // cca 30 polomer robota + 20 cm k prekazke warning
+            {
+                QFont font("Arial", 40);
+                painter.setFont(font);
+                 // vytvorenie QPainter objektu a nastavenie farby a priehľadnosti
+                QColor color(255, 0, 0, 128); // nastavenie farby na červenú s priehľadnosťou 50%
+                painter.setBrush(color);
+
+                painter.drawRect(rect3);
+                painter.setPen(Qt::white);
+                painter.drawText(rect3, Qt::AlignCenter, "WARNING");
+                firstPoint += 1;
+
+            }
+
         }
 
         // vykreslenie robota
+
         painter.setPen(Qt::red);
         painter.setBrush(Qt::red);
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
 
 
-        painter.setFont(font);
-        painter.setBrush(color);
-
-        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
-        {
-            // warning
-            if ((copyOfLaserData.Data[k].scanDistance/10 < 50) && firstPoint == 1 && copyOfLaserData.Data[k].scanDistance != 0) // cca 20 polomer robota + 20 cm k prekazke warning
-            {
-                painter.drawRect(rect3);
-                painter.drawText(rect3, Qt::AlignCenter, "WARNING");
-                firstPoint += 1;
-
-
-            }
-        }
-
-
     }
-
-
-
 
 //    if(updateSkeletonPicture==1 )
 //    {
@@ -130,8 +122,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //                painter.drawEllipse(QPoint(xp, yp),2,2);
 //        }
 //    }
-
-     painter.setBrush(Qt::red);
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
         // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
@@ -169,16 +159,13 @@ void MainWindow::paintEvent(QPaintEvent *event)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 {
-//     ui->lineEdit_2->setText(QString::number(robotX));
-//     ui->lineEdit_3->setText(QString::number(robotY));
-//     ui->lineEdit_4->setText(QString::number(robotFi));
+
 }
 
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
 /// vola sa vzdy ked dojdu nove data z robota. nemusite nic riesit, proste sa to stane
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-
 
 
 
@@ -212,8 +199,6 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
-
-
     updateLaserPicture=1;
     update();//tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 
@@ -230,6 +215,7 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
     cameraData.copyTo(frame[(actIndex+1)%3]);//kopirujem do nasej strukury
     actIndex=(actIndex+1)%3;//aktualizujem kde je nova fotka
     updateLaserPicture=1;
+
     return 0;
 }
 
@@ -237,104 +223,33 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
 /// vola sa ked dojdu nove data z trackera
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
+
     memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
 
     updateSkeletonPicture=1;
 
-
     if(stop_switch == true){
         switch (detectGestures()) {
         case LIKE:
-            printf("LIKE\n");
-            if(forward == false){
-                while (ramp_trans >= 0.0){
-                    ramp_trans -= 0.01;
 
-                    trans = 200 *ramp_trans;
-                    robot.setTranslationSpeed(trans);
-
-                }
-            }
-
-            forward = true;
-
-            if (ramp_trans<1)
-                ramp_trans+=0.1;
-
-            trans = 200 *ramp_trans;
-//            printf("%f\n", trans);
-            robot.setTranslationSpeed(trans);
-            ramp_rot=0.0;
-
+            robot.setTranslationSpeed(200);
+          //  cout <<"like"<< endl;
             break;
         case DISLIKE:
-            printf("DISLIKE\n");
-            if(forward == true){
-                while (ramp_trans >= 0.0){
-                    ramp_trans -= 0.01;
-
-                    trans = 200 *ramp_trans;
-                    robot.setTranslationSpeed(-trans);
-
-                }
-            }
-
-            forward = false;
-
-            if (ramp_trans<1)
-                ramp_trans+=0.1;
-
-            trans = 200 *ramp_trans;
-//            printf("%f\n", trans);
-            robot.setTranslationSpeed(-trans);
-            ramp_rot=0.0;
-
+            robot.setTranslationSpeed(-200);
+         //    cout <<"dislike"<< endl;
             break;
+
         case ROTATE_R:
-            printf("ROTATE_R\n");
-            if (ramp_rot<1)
-                ramp_rot+=0.1;
-            rot = 3.14159/6 *ramp_rot;
-//            printf("%f\n", rot);
-            robot.setRotationSpeed(-rot);
-            ramp_trans=0.0;
+            robot.setRotationSpeed(-3.14159/8);
             break;
         case ROTATE_L:
-            if (ramp_rot<1)
-                ramp_rot+=0.1;
-            rot = 3.14159/6 *ramp_rot;
-            printf("ROTATE_L\n");
-            robot.setRotationSpeed(rot);
-            ramp_trans=0.0;
+            robot.setRotationSpeed(3.14159/8);
             break;
         case STOP:
-
-            while (ramp_trans >= 0.0){
-                ramp_trans -= 0.01;
-                if(forward == true){
-                    printf("STOP1\n");
-                    trans = 200 *ramp_trans;
-//                    printf("%f\n", trans);
-                    robot.setTranslationSpeed(trans);
-                }else{
-                    printf("STOP2\n");
-                    trans = 200 *ramp_trans;
-//                    printf("%f\n", trans);
-                    robot.setTranslationSpeed(-trans);
-                }
-            }
-
             robot.setTranslationSpeed(0);
-
-
-
-            ramp_trans= 0.0;
-
-            ramp_rot=0.0;
-
             break;
         default:
-            printf("def\n");
             break;
         }
     }
@@ -353,7 +268,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
     robot.setLaserParameters(ipaddress,52999,5299,/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/std::bind(&MainWindow::processThisLidar,this,std::placeholders::_1));
     robot.setRobotParameters(ipaddress,53000,5300,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
     //---simulator ma port 8889, realny robot 8000
-    robot.setCameraParameters("http://"+ipaddress+":8000/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
+    robot.setCameraParameters("http://"+ipaddress+":8889/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
     robot.setSkeletonParameters("127.0.0.1",23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
     ///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
     robot.robotStart();
@@ -443,8 +358,20 @@ int MainWindow::detectGestures()
              if (skeleJoints.joints[left_middle_ip].y < skeleJoints.joints[left_ring_ip].y) {
 
                  if (skeleJoints.joints[left_ring_ip].y < skeleJoints.joints[left_pink_ip].y ){
+                    if (skeleJoints.joints[left_index_tip].x > skeleJoints.joints[left_index_ip].x ){
+                        if (skeleJoints.joints[left_middle_tip].x > skeleJoints.joints[left_middle_ip].x ){
 
-                     return LIKE;
+                            if (skeleJoints.joints[left_ringy_tip].x > skeleJoints.joints[left_ring_ip].x ){
+
+                                if (skeleJoints.joints[left_pink_tip].x > skeleJoints.joints[left_pink_ip].x ){
+                                    if (skeleJoints.joints[left_thumb_tip].y < skeleJoints.joints[left_index_mcp].y){
+
+                                     return LIKE;
+                                    }
+                                }
+                          }
+                    }
+                }
              }
            }
         }
@@ -459,9 +386,22 @@ int MainWindow::detectGestures()
          if (skeleJoints.joints[left_middle_ip].y > skeleJoints.joints[left_ring_ip].y) {
 
              if (skeleJoints.joints[left_ring_ip].y > skeleJoints.joints[left_pink_ip].y ){
+                 //new
+                 if (skeleJoints.joints[left_index_tip].x > skeleJoints.joints[left_index_ip].x ){
+                     if (skeleJoints.joints[left_middle_tip].x > skeleJoints.joints[left_middle_ip].x ){
 
-                 return DISLIKE;
-         }
+                         if (skeleJoints.joints[left_ringy_tip].x > skeleJoints.joints[left_ring_ip].x ){
+
+                             if (skeleJoints.joints[left_pink_tip].x > skeleJoints.joints[left_pink_ip].x ){
+                                if (skeleJoints.joints[left_thumb_tip].y > skeleJoints.joints[left_index_mcp].y){
+                                        return DISLIKE;
+                                    }
+
+                            }
+                         }
+                     }
+                 }
+            }
        }
     }
     }
@@ -477,7 +417,11 @@ int MainWindow::detectGestures()
 
                  if (skeleJoints.joints[left_pink_tip].y > skeleJoints.joints[left_pink_ip].y){
 
-                             return ROTATE_R;
+                     if (skeleJoints.joints[left_thumb_tip].x < skeleJoints.joints[left_index_tip].x){
+
+                                 return ROTATE_R;
+
+                   }
 
                }
 
@@ -490,9 +434,14 @@ int MainWindow::detectGestures()
      if (skeleJoints.joints[left_index_tip].y < skeleJoints.joints[left_index_ip].y){
 
          if (skeleJoints.joints[left_middle_tip].y > skeleJoints.joints[left_middle_ip].y){
+            if (skeleJoints.joints[left_thumb_tip].x < skeleJoints.joints[left_index_tip].x){
+                if (skeleJoints.joints[left_ringy_tip].y > skeleJoints.joints[left_ring_ip].y){
 
+                    if (skeleJoints.joints[left_pink_tip].y > skeleJoints.joints[left_pink_ip].y){
                      return ROTATE_L;
-
+                    }
+                }
+            }
        }
     }
 
