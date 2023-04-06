@@ -77,6 +77,8 @@ private:
 
     //--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
     Ui::MainWindow *ui;
+     virtual int heightForWidth ( int w ) { return w*9/16;};
+     void resizeEvent(QResizeEvent *event);
      void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
      int updateLaserPicture;
      LaserMeasurement copyOfLaserData;
@@ -92,6 +94,8 @@ private:
          STOP, LIKE, DISLIKE,  ROTATE_R, ROTATE_L,
      };
 
+     int hig_w = 400;
+     int wid_w = 400;
      int collision = 0;
      double D = 0;
      long double tickToMeter = 0.000085292090497737556558;

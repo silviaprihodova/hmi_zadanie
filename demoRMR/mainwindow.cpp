@@ -3,6 +3,9 @@
 #include <QPainter>
 #include <math.h>
 #include <cmath>
+#include <thread>
+#include <chrono>
+
 // PRIHODOVA S., SVEC D.
 
 bool stop_switch = true;
@@ -10,6 +13,7 @@ bool stop_switch = true;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
+
 {
 
 
@@ -31,7 +35,26 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+//    int height = this->size().height();
+//    int width = this->size().width();
 
+
+//    resize(width,width);
+     if (hig_w != this->size().height()){
+         hig_w = this->size().height();
+         resize(hig_w*1.25,hig_w);
+         wid_w = this->size().width();
+
+     }else if (wid_w != this->size().width()){
+         wid_w = this->size().width();
+         resize(wid_w,wid_w*0.8);
+         hig_w = this->size().height();
+
+     }
+
+}
 void MainWindow::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
@@ -81,7 +104,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int dist=copyOfLaserData.Data[k].scanDistance/(12000/(rect2.height()-60)-5); ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
             int xp=rect2.width()-(rect2.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().x(); //prepocet do obrazovky
             int yp=rect2.height()-(rect2.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().y();//prepocet do obrazovky
-            if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
+            if(rect2.contains(xp,yp) && (k==1 || k==70|| k==140|| k==210))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
 
             // warning
