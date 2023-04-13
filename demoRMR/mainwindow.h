@@ -94,8 +94,8 @@ private:
          STOP, LIKE, DISLIKE,  ROTATE_R, ROTATE_L,
      };
 
-     int hig_w = 400;
-     int wid_w = 400;
+     int hig_w = 800;
+     int wid_w = 450;
      int collision = 0;
      double D = 0;
      long double tickToMeter = 0.000085292090497737556558;

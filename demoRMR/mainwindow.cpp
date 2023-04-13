@@ -64,7 +64,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     QPen pero;
     pero.setStyle(Qt::SolidLine);//styl pera - plna ciara
     pero.setWidth(3);//hrubka pera -3pixely
-    pero.setColor(Qt::green);//farba je zelena
+    pero.setColor(Qt::red);//farba je zelena
     QRect rect;
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
     rect.translate(0,15);
@@ -127,8 +127,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
         // vykreslenie robota
 
-        painter.setPen(Qt::red);
-        painter.setBrush(Qt::red);
+        painter.setPen(Qt::black);
+        painter.setBrush(Qt::black);
         painter.drawEllipse(QPoint(rect2.x()+rect2.width()/2, rect2.y()+rect2.height()/2),4,4);
 
 
@@ -145,6 +145,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //                painter.drawEllipse(QPoint(xp, yp),2,2);
 //        }
 //    }
+
+    painter.setPen(Qt::red);
+    painter.setBrush(Qt::red);
+
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
         // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
