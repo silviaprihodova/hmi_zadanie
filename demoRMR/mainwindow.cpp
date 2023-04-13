@@ -104,7 +104,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int dist=copyOfLaserData.Data[k].scanDistance/(12000/(rect2.height()-60)-5); ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
             int xp=rect2.width()-(rect2.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().x(); //prepocet do obrazovky
             int yp=rect2.height()-(rect2.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect2.topLeft().y();//prepocet do obrazovky
-            if(rect2.contains(xp,yp) && (k==1 || k==70|| k==140|| k==210))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
+            if(rect2.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                 painter.drawEllipse(QPoint(xp, yp),2,2);
 
             // warning
