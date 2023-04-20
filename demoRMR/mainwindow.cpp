@@ -64,7 +64,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     QPen pero;
     pero.setStyle(Qt::SolidLine);//styl pera - plna ciara
     pero.setWidth(3);//hrubka pera -3pixely
-    pero.setColor(Qt::red);//farba je zelena
+    pero.setColor(Qt::green);//farba je zelena
     QRect rect;
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
     rect.translate(0,15);
@@ -146,11 +146,21 @@ void MainWindow::paintEvent(QPaintEvent *event)
 //        }
 //    }
 
-    painter.setPen(Qt::red);
-    painter.setBrush(Qt::red);
 
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
+         int dist_2=copyOfLaserData.Data[k].scanDistance/10;
+
+         if(dist_2 > 100){
+             painter.setPen(Qt::green);
+             painter.setBrush(Qt::green);
+         }else if(dist_2 <= 100 && dist_2 >= 60){
+             painter.setPen(Qt::yellow);
+             painter.setBrush(Qt::yellow);
+         }else if(dist_2 < 60){
+             painter.setPen(Qt::red);
+             painter.setBrush(Qt::red);
+         }
         // orezanie, ale z nejakeho dovodu nefunguje, uz funguje
         if (copyOfLaserData.Data[k].scanAngle < 30.0  || copyOfLaserData.Data[k].scanAngle > 330.0) // rozsah 60 stupnov
         {
