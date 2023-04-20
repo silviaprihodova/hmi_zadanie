@@ -101,11 +101,14 @@ private:
      long double tickToMeter = 0.000085292090497737556558;
 
 
-
+     bool forward = true;
      QJoysticks *instance;
+     double trans = 0.0;
+     double rot = 0.0;
+     double ramp_trans = 0.0, ramp_rot = 0.0;
+     double forwardspeed = 0;//mm/s
+     double rotationspeed = 0;//omega/s
 
-     double forwardspeed;//mm/s
-     double rotationspeed;//omega/s
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);
 signals:

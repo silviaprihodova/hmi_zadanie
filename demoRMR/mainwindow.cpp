@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="127.0.0.1";//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+    ipaddress="192.168.1.14";//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
     datacounter=0;
@@ -259,22 +259,88 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
         switch (detectGestures()) {
         case LIKE:
 
-            robot.setTranslationSpeed(200);
-          //  cout <<"like"<< endl;
+                       if(forward == false){
+                           while (ramp_trans >= 0.0){
+                               ramp_trans -= 0.01;
+
+                               trans = 200 *ramp_trans;
+                               robot.setTranslationSpeed(-trans);
+
+                           }
+                       }
+
+                       forward = true;
+
+                       if (ramp_trans<1)
+                           ramp_trans+=0.1;
+
+                       trans = 200 *ramp_trans;
+
+                       robot.setTranslationSpeed(trans);
+                       ramp_rot=0.0;
             break;
+
         case DISLIKE:
-            robot.setTranslationSpeed(-200);
-         //    cout <<"dislike"<< endl;
+
+                       if(forward == true){
+                           while (ramp_trans >= 0.0){
+                               ramp_trans -= 0.01;
+
+                               trans = 200 *ramp_trans;
+                               robot.setTranslationSpeed(trans);
+
+                           }
+                       }
+
+                       forward = false;
+                       if (ramp_trans<1)
+                           ramp_trans+=0.1;
+                       trans = 200 *ramp_trans;
+
+                       robot.setTranslationSpeed(-trans);
+                       ramp_rot=0.0;
             break;
 
         case ROTATE_R:
-            robot.setRotationSpeed(-3.14159/8);
+
+                        if (ramp_rot<1)
+                            ramp_rot+=0.1;
+                        rot = 3.14159/6 *ramp_rot;
+            //            printf("%f\n", rot);
+                        robot.setRotationSpeed(-rot);
+                        ramp_trans=0.0;
             break;
         case ROTATE_L:
-            robot.setRotationSpeed(3.14159/8);
+            if (ramp_rot<1)
+                           ramp_rot+=0.1;
+                       rot = 3.14159/6 *ramp_rot;
+
+                       robot.setRotationSpeed(rot);
+                       ramp_trans=0.0;
             break;
         case STOP:
-            robot.setTranslationSpeed(0);
+            while (ramp_trans >= 0.0){
+                          ramp_trans -= 0.01;
+                          if(forward == true){
+
+                              trans = 200 *ramp_trans;
+          //
+                              robot.setTranslationSpeed(trans);
+                          }else{
+
+                              trans = 200 *ramp_trans;
+          //
+                              robot.setTranslationSpeed(-trans);
+                          }
+                      }
+
+                      robot.setTranslationSpeed(0);
+
+
+
+                      ramp_trans= 0.0;
+
+                      ramp_rot=0.0;
             break;
         default:
             break;
@@ -295,7 +361,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
     robot.setLaserParameters(ipaddress,52999,5299,/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/std::bind(&MainWindow::processThisLidar,this,std::placeholders::_1));
     robot.setRobotParameters(ipaddress,53000,5300,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
     //---simulator ma port 8889, realny robot 8000
-    robot.setCameraParameters("http://"+ipaddress+":8889/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
+    robot.setCameraParameters("http://"+ipaddress+":8000/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
     robot.setSkeletonParameters("127.0.0.1",23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
     ///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
     robot.robotStart();
